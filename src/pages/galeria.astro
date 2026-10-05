@@ -1,0 +1,505 @@
+---
+import { getImage } from 'astro:assets';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import ThumbGrid from '../components/ThumbGrid.astro';
+import { mainCategories, otherCategories, photoCount, type CategoryWithPhotos } from '../data/gallery';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { plural } from '../utils';
+
+// Don't read photo.src.width etc. here – any property access makes Astro copy the full original into dist.
+async function withFullSize(category: CategoryWithPhotos) {
+  const photos = await Promise.all(
+    category.photos.map(async (photo) => {
+      const full = await getImage({ src: photo.src, width: 1920, height: 1920, fit: 'inside', format: 'webp' });
+      return { ...photo, full: full.src };
+    }),
+  );
+  return { ...category, photos };
+}
+
+const main = await Promise.all(mainCategories.map(withFullSize));
+const other = await Promise.all(otherCategories.map(withFullSize));
+const otherCount = other.reduce((sum, c) => sum + c.photos.length, 0);
+
+const filters = [
+  { id: 'vsetko', label: 'Všetko', count: photoCount },
+  ...main.map((c) => ({ id: c.slug, label: c.title, count: c.photos.length })),
+  { id: 'ostatne', label: 'Ďalšie', count: otherCount },
+];
+---
+
+<BaseLayout
+  title="Galéria realizácií"
+  description="Fotky nábytku na mieru od stolárstva Facstol – kuchyne, vstavané skrine, šatníky, kúpeľne, detské izby, spálne a výrobky z masívu."
+>
+  <section class="intro">
+    <div class="container animate-in">
+      <p class="eyebrow">Galéria</p>
+      <h1>Moje realizácie</h1>
+      <p class="lead">
+        Od kuchýň a vstavaných skríň cez spálne až po kúpeľňový a obývačkový nábytok. Každý kus je výsledkom precíznej
+        remeselnej práce, kvalitných materiálov a zmyslu pre detail. Nechajte sa inšpirovať.
+      </p>
+    </div>
+  </section>
+
+  <div class="filters-bar">
+    <nav class="container filters" aria-label="Kategórie galérie">
+      {
+        filters.map((f, i) => (
+          <a href={i === 0 ? '#' : `#${f.id}`} data-filter={f.id} aria-current={i === 0 ? 'true' : undefined}>
+            {f.label}
+            <span>{f.count}</span>
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+
+  <div class="container gallery" id="galeria">
+    {
+      main.map((category) => (
+        <section class="category" id={category.slug} data-group={category.slug}>
+          <h2>
+            {category.title}
+            <span>{plural(category.photos.length, ['fotka', 'fotky', 'fotiek'])}</span>
+          </h2>
+          <ThumbGrid photos={category.photos} />
+        </section>
+      ))
+    }
+
+    <div class="other" id="ostatne" data-group="ostatne">
+      <h2 class="other-title">Ďalšie realizácie</h2>
+      {
+        other.map((category) => (
+          <section class="category" id={category.slug}>
+            <h3>
+              {category.title}
+              <span>{plural(category.photos.length, ['fotka', 'fotky', 'fotiek'])}</span>
+            </h3>
+            <ThumbGrid photos={category.photos} />
+          </section>
+        ))
+      }
+    </div>
+  </div>
+
+  <CtaBand title="Páči sa vám niečo z galérie?" text="Ozvite sa a dohodneme si obhliadku zdarma – priestor zameriam a navrhnem riešenie presne pre vás." />
+
+  <dialog class="lightbox" aria-label="Zväčšená fotka">
+    <figure>
+      <figcaption>
+        <span class="lb-caption"></span>
+        <span class="lb-counter"></span>
+      </figcaption>
+    </figure>
+    <button type="button" class="lb-btn lb-close" aria-label="Zavrieť"><Icon name="close" size={28} /></button>
+    <button type="button" class="lb-btn lb-prev" aria-label="Predchádzajúca fotka"><Icon name="prev" size={32} /></button>
+    <button type="button" class="lb-btn lb-next" aria-label="Ďalšia fotka"><Icon name="next" size={32} /></button>
+  </dialog>
+</BaseLayout>
+
+<script>
+  const motionOK = matchMedia('(prefers-reduced-motion: no-preference)').matches;
+  const ease = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+
+  function appear(el: Element, delay: number) {
+    el.animate(
+      [
+        { opacity: 0, transform: 'translateY(18px) scale(0.97)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      { duration: 550, delay, easing: ease, fill: 'backwards' },
+    );
+  }
+
+  const thumbObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const li = entry.target as HTMLElement;
+        li.classList.add('shown');
+        if (motionOK) appear(li, Number(li.dataset.col) * 70);
+        thumbObserver.unobserve(li);
+      }
+    },
+    { rootMargin: '0px 0px -5% 0px' },
+  );
+  document.querySelectorAll('li[data-col]').forEach((li) => thumbObserver.observe(li));
+
+  function animateFilterChange() {
+    if (!motionOK) return;
+    const visible = [...document.querySelectorAll<HTMLElement>('[data-group]:not([hidden]) li[data-col].shown')];
+    visible.slice(0, 16).forEach((li, n) => appear(li, n * 40));
+  }
+
+  const filterLinks = [...document.querySelectorAll<HTMLAnchorElement>('[data-filter]')];
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
+  const gallery = document.getElementById('galeria')!;
+
+  function applyFilter(name: string) {
+    const active = groups.some((g) => g.dataset.group === name) ? name : 'vsetko';
+    for (const group of groups) group.hidden = active !== 'vsetko' && group.dataset.group !== active;
+    for (const link of filterLinks) {
+      if (link.dataset.filter === active) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    }
+    return active;
+  }
+
+  function scrollToGallery() {
+    const offset = document.querySelector<HTMLElement>('.filters-bar')!.getBoundingClientRect().height;
+    const top = gallery.getBoundingClientRect().top + window.scrollY - offset - 80;
+    if (window.lenis) window.lenis.scrollTo(top);
+    else window.scrollTo({ top });
+  }
+
+  for (const link of filterLinks) {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const active = applyFilter(link.dataset.filter!);
+      history.replaceState(null, '', active === 'vsetko' ? location.pathname : `#${active}`);
+      if (window.scrollY > gallery.offsetTop - 200) scrollToGallery();
+      link.scrollIntoView({ block: 'nearest', inline: 'center' });
+      animateFilterChange();
+    });
+  }
+
+  // Deep link from the homepage, e.g. /galeria/#kuchyne
+  if (location.hash) {
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    const group = target?.closest<HTMLElement>('[data-group]')?.dataset.group;
+    if (group) {
+      applyFilter(group);
+      requestAnimationFrame(() => target!.scrollIntoView());
+    }
+  }
+
+  const dialog = document.querySelector<HTMLDialogElement>('.lightbox')!;
+  const image = new Image();
+  dialog.querySelector('figure')!.prepend(image);
+  const caption = dialog.querySelector('.lb-caption')!;
+  const counter = dialog.querySelector('.lb-counter')!;
+  let items: HTMLAnchorElement[] = [];
+  let index = 0;
+
+  // direction: 0 = open, 1 = next, -1 = previous
+  function show(i: number, direction = 0) {
+    index = (i + items.length) % items.length;
+    const link = items[index];
+    const thumb = link.querySelector('img')!;
+
+    // Show the already-loaded thumbnail first, then swap in the full-size image once decoded.
+    image.src = thumb.currentSrc || thumb.src;
+    image.alt = thumb.alt;
+    caption.textContent = thumb.alt;
+    counter.textContent = `${index + 1} / ${items.length}`;
+
+    if (motionOK) {
+      const from = direction === 0 ? 'scale(0.94)' : `translateX(${direction * 56}px)`;
+      image.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: 'none' }], { duration: 340, easing: ease });
+    }
+
+    const full = new Image();
+    full.src = link.href;
+    full
+      .decode()
+      .catch(() => {})
+      .then(() => {
+        if (items[index] === link) image.src = link.href;
+      });
+
+    // Preload neighbours
+    for (const n of [index + 1, index - 1]) new Image().src = items[(n + items.length) % items.length].href;
+  }
+
+  document.addEventListener('click', (event) => {
+    const link = (event.target as Element).closest<HTMLAnchorElement>('[data-lightbox]');
+    if (!link || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    event.preventDefault();
+    items = [...document.querySelectorAll<HTMLAnchorElement>('[data-lightbox]')].filter((a) => !a.closest('[hidden]'));
+    dialog.showModal();
+    window.lenis?.stop();
+    show(items.indexOf(link));
+  });
+
+  dialog.addEventListener('close', () => {
+    window.lenis?.start();
+    items[index]?.focus();
+  });
+
+  dialog.querySelector('.lb-close')!.addEventListener('click', () => dialog.close());
+  dialog.querySelector('.lb-prev')!.addEventListener('click', () => show(index - 1, -1));
+  dialog.querySelector('.lb-next')!.addEventListener('click', () => show(index + 1, 1));
+
+  dialog.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    if (target === dialog || target.tagName === 'FIGURE') dialog.close();
+  });
+
+  dialog.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') show(index - 1, -1);
+    if (event.key === 'ArrowRight') show(index + 1, 1);
+  });
+
+  let touchX = 0;
+  dialog.addEventListener('touchstart', (event) => (touchX = event.touches[0].clientX), { passive: true });
+  dialog.addEventListener('touchend', (event) => {
+    const dx = event.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) show(dx < 0 ? index + 1 : index - 1, dx < 0 ? 1 : -1);
+  });
+</script>
+
+<style>
+  .intro {
+    padding-block: clamp(56px, 8vw, 104px) clamp(32px, 4vw, 48px);
+  }
+
+  .intro h1 {
+    margin-block: 12px 20px;
+  }
+
+  .filters-bar {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 40;
+    background: rgb(245 245 241 / 0.97);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding-block: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filters a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .filters a:hover {
+    border-color: var(--accent-ink);
+  }
+
+  .filters span {
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  .filters a[aria-current='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .filters a[aria-current='true'] span {
+    color: var(--ink);
+  }
+
+  .gallery {
+    display: grid;
+    gap: clamp(48px, 6vw, 80px);
+    padding-block: clamp(40px, 5vw, 64px) var(--section);
+  }
+
+  .category {
+    scroll-margin-top: calc(var(--header-h) + 88px);
+  }
+
+  .category h2,
+  .category h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    margin-bottom: 20px;
+  }
+
+  .category h2 {
+    font-size: clamp(1.75rem, 1.5vw + 1rem, 2.25rem);
+  }
+
+  .category h2 span,
+  .category h3 span {
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+
+  .other {
+    display: grid;
+    gap: clamp(40px, 5vw, 56px);
+    padding-top: clamp(40px, 5vw, 64px);
+    border-top: 1px solid var(--line);
+    scroll-margin-top: calc(var(--header-h) + 88px);
+  }
+
+  .other-title {
+    font-size: clamp(1.75rem, 1.5vw + 1rem, 2.25rem);
+    margin-bottom: -16px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  :global(html:has(dialog[open])) {
+    overflow: hidden;
+  }
+
+  .lightbox {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    background: rgb(16 15 13 / 0.96);
+    color: #fff;
+  }
+
+  .lightbox::backdrop {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lightbox {
+      opacity: 0;
+      transition:
+        opacity 0.3s ease,
+        overlay 0.3s allow-discrete,
+        display 0.3s allow-discrete;
+    }
+
+    .lightbox[open] {
+      opacity: 1;
+    }
+
+    @starting-style {
+      .lightbox[open] {
+        opacity: 0;
+      }
+    }
+  }
+
+  .lightbox[open] {
+    display: grid;
+  }
+
+  figure {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    place-items: center;
+    gap: 12px;
+    min-height: 0;
+    padding: 64px 72px 20px;
+  }
+
+  figure :global(img) {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - 140px);
+    object-fit: contain;
+    border-radius: 4px;
+    user-select: none;
+  }
+
+  figcaption {
+    display: flex;
+    gap: 16px;
+    font-size: 0.9375rem;
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  .lb-counter {
+    color: rgb(255 255 255 / 0.55);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lb-btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.08);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .lb-btn:hover {
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  .lb-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .lb-prev,
+  .lb-next {
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  .lb-prev {
+    left: 12px;
+  }
+
+  .lb-next {
+    right: 12px;
+  }
+
+  @media (max-width: 639px) {
+    figure {
+      padding: 64px 8px 84px;
+    }
+
+    figure :global(img) {
+      max-height: calc(100dvh - 180px);
+    }
+
+    .lb-prev,
+    .lb-next {
+      top: auto;
+      bottom: 16px;
+      translate: none;
+    }
+
+    .lb-prev {
+      left: calc(50% - 64px);
+    }
+
+    .lb-next {
+      right: calc(50% - 64px);
+    }
+  }
+</style>

@@ -1,0 +1,127 @@
+---
+import { nav, site } from '../config';
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+
+const current = Astro.url.pathname;
+---
+
+<header class="header">
+  <div class="container inner">
+    <a href="/" class="home" aria-label={`${site.name} – úvodná stránka`}>
+      <Logo />
+    </a>
+
+    <nav aria-label="Hlavná navigácia">
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href} aria-current={current.startsWith(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <a href={`tel:${site.phone}`} class="btn btn-primary call">
+      <Icon name="phone" />
+      {site.phoneDisplay}
+    </a>
+  </div>
+</header>
+
+<style>
+  .header {
+    view-transition-name: header;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(255 255 255 / 0.97);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: var(--header-h);
+  }
+
+  .home {
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  ul {
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    list-style: none;
+  }
+
+  nav a {
+    display: block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+  }
+
+  nav a:hover {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  nav a[aria-current='page'] {
+    font-weight: 600;
+    box-shadow: inset 0 -3px 0 var(--accent);
+    border-radius: 0;
+  }
+
+  .call {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  @media (max-width: 899px) {
+    .call {
+      display: none;
+    }
+  }
+
+  @media (max-width: 479px) {
+    .inner {
+      gap: 8px;
+    }
+
+    .home :global(.logo) {
+      height: 26px;
+    }
+
+    nav a {
+      padding: 8px 9px;
+      font-size: 0.9375rem;
+    }
+  }
+
+  @media (max-width: 359px) {
+    .home :global(.logo) {
+      height: 22px;
+    }
+
+    ul {
+      gap: 0;
+    }
+
+    nav a {
+      padding: 8px 6px;
+      font-size: 0.875rem;
+    }
+  }
+</style>

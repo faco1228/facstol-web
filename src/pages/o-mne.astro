@@ -1,0 +1,187 @@
+---
+import { Image } from 'astro:assets';
+import measuringImage from '../assets/dielna/title1.jpg';
+import toolsImage from '../assets/dielna/title2.jpg';
+import sawImage from '../assets/dielna/title3.jpg';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { completedJobs, locationText, site, yearsOfPractice } from '../config';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const services = [
+  { icon: 'hammer', title: 'Návrh a výroba nábytku na mieru', text: 'Kuchynské linky, vstavané skrine, postele, kúpeľňové aj obývačkové zostavy.' },
+  { icon: 'cube', title: '3D vizualizácia na požiadanie', text: 'Ak chcete, ešte pred výrobou uvidíte, ako bude hotový nábytok vyzerať vo vašom priestore.' },
+  { icon: 'truck', title: 'Doprava a montáž', text: 'Hotový nábytok priveziem až k vám a namontujem ho na mieste.' },
+  { icon: 'ruler', title: 'Obhliadka a zameranie zdarma', text: 'Prídem k vám, priestor presne zameriam a spolu prejdeme, čo sa dá urobiť.' },
+  { icon: 'layers', title: 'Poradenstvo pri výbere materiálov', text: 'Pomôžem vybrať dosky, dekory, kovanie a riešenia, ktoré vydržia.' },
+] as const;
+---
+
+<BaseLayout
+  title="O mne"
+  description={`${site.owner} – stolár s viac ako ${yearsOfPractice}-ročnou praxou. Nábytok na mieru od obhliadky a návrhu až po montáž.`}
+  image={measuringImage}
+>
+  <section class="section intro">
+    <div class="container intro-grid">
+      <div class="intro-text animate-in">
+        <p class="eyebrow">O mne</p>
+        <h1>Stolárstvu sa venujem už viac ako {yearsOfPractice}&nbsp;rokov</h1>
+        <p class="lead">
+          Volám sa {site.owner}. Za ten čas mám za sebou viac ako {completedJobs} zákaziek a stovky spokojných
+          zákazníkov majú doma nábytok presne podľa svojich predstáv.
+        </p>
+        <p>
+          Špecializujem sa na výrobu nábytku na mieru – od kuchynských liniek cez vstavané skrine a postele až po
+          kúpeľňové a obývačkové zostavy. Každý kus je originál, zhotovený s dôrazom na detail, funkčnosť a kvalitné
+          remeselné spracovanie.
+        </p>
+        <p>{locationText}</p>
+        <dl class="stats">
+          <div><dt>Rokov praxe</dt><dd><span data-count-to={yearsOfPractice}>{yearsOfPractice}</span><span class="suffix">+</span></dd></div>
+          <div><dt>Zákaziek</dt><dd><span data-count-to={completedJobs}>{completedJobs}</span><span class="suffix">+</span></dd></div>
+          <div><dt>Zákaziek ročne</dt><dd><span data-count-to={site.jobsPerYear}>{site.jobsPerYear}</span></dd></div>
+        </dl>
+      </div>
+      <div class="collage" data-reveal>
+        <Image src={measuringImage} alt="Meranie a značenie dosky" width={900} widths={[400, 640, 900]} sizes="(min-width: 960px) 30vw, 60vw" class="c1" />
+        <Image src={toolsImage} alt="Stolárske náradie pri práci" width={480} widths={[300, 480]} sizes="(min-width: 960px) 18vw, 40vw" class="c2" />
+        <Image src={sawImage} alt="Rezanie dosky ponornou pílou" width={480} widths={[300, 480]} sizes="(min-width: 960px) 18vw, 40vw" class="c3" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section services">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Služby</p>
+        <h2>Čo pre vás urobím</h2>
+      </div>
+      <ul class="service-grid">
+        {
+          services.map((s, i) => (
+            <li data-reveal style={`--delay: ${i * 70}ms`}>
+              <span class="hex-icon">
+                <Icon name={s.icon} />
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand title="Hľadáte spoľahlivého stolára?" text="Postarám sa, aby bol výsledok presne podľa vašich predstáv. Ozvite sa a dohodneme sa na detailoch." />
+</BaseLayout>
+
+<style>
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(40px, 6vw, 88px);
+    align-items: center;
+  }
+
+  .intro-text {
+    display: grid;
+    gap: 20px;
+  }
+
+  .intro-text h1 {
+    font-size: clamp(2.25rem, 3vw + 1rem, 3.75rem);
+  }
+
+  .intro-text p:last-child {
+    max-width: 60ch;
+  }
+
+  .collage {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .collage :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius);
+  }
+
+  .collage :global(.c1) {
+    grid-row: span 2;
+    aspect-ratio: 3 / 4;
+  }
+
+  .services {
+    background: var(--surface);
+  }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .service-grid li {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 28px 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 40px;
+    margin-top: 8px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+
+  .stats div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .stats dt {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .stats dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .stats .suffix {
+    color: var(--accent-ink);
+  }
+
+  .service-grid h3 {
+    font-size: 1.25rem;
+  }
+
+  .service-grid p {
+    color: var(--muted);
+  }
+
+  @media (max-width: 959px) {
+    .intro-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+</style>

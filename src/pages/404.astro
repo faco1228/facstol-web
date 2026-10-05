@@ -1,0 +1,38 @@
+---
+import Icon from '../components/Icon.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Stránka sa nenašla" description="Táto stránka neexistuje. Pozrite si galériu realizácií alebo sa vráťte na úvodnú stránku." noindex>
+  <section class="section">
+    <div class="container notfound">
+      <p class="eyebrow">Chyba 404</p>
+      <h1>Táto stránka neexistuje</h1>
+      <p class="lead">Možno bola presunutá alebo je v adrese preklep. Skúste začať od úvodnej stránky alebo galérie.</p>
+      <div class="actions">
+        <a href="/" class="btn btn-primary">Na úvodnú stránku</a>
+        <a href="/galeria/" class="btn btn-outline">
+          Galéria
+          <Icon name="arrow" />
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound {
+    display: grid;
+    justify-items: start;
+    gap: 20px;
+    min-height: 50vh;
+    align-content: center;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+  }
+</style>

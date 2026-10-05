@@ -1,0 +1,82 @@
+---
+import { site } from '../config';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Ochrana osobných údajov" description="Zásady spracúvania osobných údajov na webe stolárstva Facstol.">
+  <article class="section">
+    <div class="container prose">
+      <p class="eyebrow">Právne informácie</p>
+      <h1>Ochrana osobných údajov</h1>
+
+      <h2>1. Kto spracúva vaše údaje</h2>
+      <p>
+        Prevádzkovateľom je {site.owner} ({site.name}). Kontakt: <a href={`mailto:${site.email}`}>{site.email}</a>,
+        <a href={`tel:${site.phone}`}>{site.phoneDisplay}</a>.
+      </p>
+
+      <h2>2. Aké údaje zbieram</h2>
+      <p>
+        Len údaje potrebné na komunikáciu a vybavenie zákazky – najmä meno, e-mail, telefón a informácie, ktoré mi sami
+        pošlete (napríklad popis alebo fotky priestoru).
+      </p>
+
+      <h2>3. Na čo údaje používam</h2>
+      <p>
+        Výhradne na odpoveď na váš dopyt, prípravu ponuky a plnenie zákazky. Vaše údaje nepredávam ani neposkytujem
+        tretím stranám na marketing. Správy z kontaktného formulára na webe technicky doručuje na môj e-mail služba
+        Web3Forms.
+      </p>
+
+      <h2>4. Ako dlho údaje uchovávam</h2>
+      <p>Len počas doby nevyhnutnej na vybavenie dopytu a zákazky, prípadne tak dlho, ako to vyžaduje zákon.</p>
+
+      <h2>5. Cookies</h2>
+      <p>
+        Tento web nepoužíva cookies ani analytické a sledovacie nástroje. Písma sú uložené priamo na webe, takže sa pri
+        návšteve nenačítavajú zo serverov tretích strán.
+      </p>
+
+      <h2>6. Vaše práva</h2>
+      <ul>
+        <li>právo na prístup k osobným údajom</li>
+        <li>právo na opravu údajov</li>
+        <li>právo na vymazanie údajov</li>
+        <li>právo namietať proti spracúvaniu</li>
+        <li>právo podať sťažnosť na Úrad na ochranu osobných údajov SR</li>
+      </ul>
+
+      <h2>7. Kontakt</h2>
+      <p>
+        Ak máte otázky o spracúvaní údajov, napíšte mi na <a href={`mailto:${site.email}`}>{site.email}</a>
+        alebo použite stránku <a href="/kontakt/">Kontakt</a>.
+      </p>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .prose {
+    max-width: calc(760px + 2 * var(--gutter));
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 3vw + 1rem, 3.25rem);
+    margin-block: 12px 40px;
+  }
+
+  h2 {
+    font-size: 1.375rem;
+    margin-block: 36px 10px;
+  }
+
+  ul {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.2em;
+  }
+
+  li::marker {
+    color: var(--accent);
+  }
+</style>

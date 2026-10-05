@@ -1,0 +1,249 @@
+---
+import { site } from '../config';
+import { categories } from '../data/gallery';
+import Icon from './Icon.astro';
+
+const mode = site.web3formsKey ? 'web3forms' : 'mailto';
+const topics = [...categories.filter((c) => c.group === 'main').map((c) => c.singular ?? c.title), 'Nábytok pre firmu', 'Iné'];
+---
+
+<form
+  class="form"
+  id="formular"
+  method="POST"
+  action={mode === 'web3forms' ? 'https://api.web3forms.com/submit' : `mailto:${site.email}`}
+  enctype={mode === 'mailto' ? 'text/plain' : undefined}
+  data-mode={mode}
+  data-email={site.email}
+  novalidate
+>
+  <input type="hidden" name="access_key" value={site.web3formsKey} />
+  <input type="hidden" name="subject" value="Nová správa z webu facstol.sk" />
+  <input type="hidden" name="from_name" value="Web Facstol" />
+  <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+  <div class="grid">
+    <label>
+      <span>Meno a priezvisko *</span>
+      <input type="text" name="name" autocomplete="name" required />
+    </label>
+    <label>
+      <span>Obec / mesto</span>
+      <input type="text" name="location" autocomplete="address-level2" />
+    </label>
+    <label>
+      <span>Telefón</span>
+      <input type="tel" name="phone" autocomplete="tel" />
+    </label>
+    <label>
+      <span>E-mail</span>
+      <input type="email" name="email" autocomplete="email" />
+    </label>
+    <label class="full">
+      <span>Čo potrebujete?</span>
+      <select name="topic">
+        {topics.map((t) => <option>{t}</option>)}
+      </select>
+    </label>
+    <label class="full">
+      <span>Správa *</span>
+      <textarea name="message" rows="5" required placeholder="Opíšte svoju predstavu a napíšte, kedy by sa vám hodila obhliadka…"></textarea>
+    </label>
+  </div>
+
+  <label class="consent">
+    <input type="checkbox" name="consent" value="áno" required />
+    <span>
+      Súhlasím so spracovaním osobných údajov na účely odpovede na moju správu
+      (<a href="/ochrana-osobnych-udajov/">viac informácií</a>). *
+    </span>
+  </label>
+
+  <p class="error" role="alert" hidden></p>
+
+  <button type="submit" class="btn btn-primary">
+    Poslať správu
+    <Icon name="arrow" />
+  </button>
+
+  <div class="success" role="status" hidden>
+    <strong>Ďakujem, správa bola odoslaná.</strong>
+    <p>Ozvem sa vám čo najskôr a dohodneme si termín obhliadky. Ak sa ponáhľate, zavolajte na <a href={`tel:${site.phone}`}>{site.phoneDisplay}</a>.</p>
+  </div>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('#formular')!;
+  const errorBox = form.querySelector<HTMLElement>('.error')!;
+  const successBox = form.querySelector<HTMLElement>('.success')!;
+  const button = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+
+  function showError(message: string) {
+    errorBox.textContent = message;
+    errorBox.hidden = false;
+  }
+
+  function validate(data: FormData) {
+    if (!String(data.get('name')).trim()) return 'Vyplňte, prosím, meno.';
+    const phone = String(data.get('phone')).trim();
+    const email = String(data.get('email')).trim();
+    if (!phone && !email) return 'Zadajte telefón alebo e-mail, aby som sa vám mohol ozvať.';
+    if (email && !form.querySelector<HTMLInputElement>('[name=email]')!.checkValidity()) return 'E-mail nie je v správnom tvare.';
+    if (!String(data.get('message')).trim()) return 'Napíšte, prosím, krátku správu.';
+    if (!data.get('consent')) return 'Pred odoslaním je potrebný súhlas so spracovaním údajov.';
+    return '';
+  }
+
+  form.addEventListener('input', () => (errorBox.hidden = true));
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const problem = validate(data);
+    if (problem) return showError(problem);
+
+    if (form.dataset.mode === 'mailto') {
+      const body = [
+        `Meno: ${data.get('name')}`,
+        `Obec: ${data.get('location') || '-'}`,
+        `Telefón: ${data.get('phone') || '-'}`,
+        `E-mail: ${data.get('email') || '-'}`,
+        `Čo potrebujem: ${data.get('topic')}`,
+        '',
+        String(data.get('message')),
+      ].join('\n');
+      const subject = `Správa z webu: ${data.get('topic')}`;
+      location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      return;
+    }
+
+    button.disabled = true;
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(Object.fromEntries(data)),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message);
+      form.querySelectorAll<HTMLElement>('.grid, .consent, button').forEach((el) => (el.hidden = true));
+      successBox.hidden = false;
+      successBox.scrollIntoView({ block: 'center' });
+    } catch {
+      showError('Správu sa nepodarilo odoslať. Skúste to znova alebo zavolajte.');
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .form {
+    display: grid;
+    gap: 20px;
+    padding: clamp(24px, 4vw, 40px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  label {
+    display: grid;
+    gap: 6px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  input:not([type='checkbox']),
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid #cfcfc6;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 400;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 0;
+    border-color: transparent;
+  }
+
+  .consent {
+    display: flex;
+    align-items: start;
+    gap: 12px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .consent input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex: none;
+    accent-color: var(--accent-ink);
+  }
+
+  .error {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    background: #fdecea;
+    color: #8a1c12;
+  }
+
+  button {
+    justify-self: start;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .success {
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+  }
+
+  .success p {
+    margin-top: 6px;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  @media (max-width: 599px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    button {
+      justify-self: stretch;
+    }
+  }
+</style>

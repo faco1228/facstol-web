@@ -1,0 +1,219 @@
+---
+import ContactForm from '../components/ContactForm.astro';
+import Icon from '../components/Icon.astro';
+import { locationText, site } from '../config';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const whatsapp = `https://wa.me/${site.phone.replace(/\D/g, '')}`;
+
+const channels = [
+  { icon: 'phone', label: 'Telefón', value: site.phoneDisplay, href: `tel:${site.phone}`, note: 'Najrýchlejší spôsob, ako sa dohodnúť.' },
+  { icon: 'chat', label: 'WhatsApp', value: 'Napísať správu', href: whatsapp, note: 'Pre prvú predstavu môžete poslať aj fotky priestoru.', external: true },
+  { icon: 'mail', label: 'E-mail', value: site.email, href: `mailto:${site.email}`, note: 'Hodí sa na podrobnejší popis a prílohy.' },
+] as const;
+
+const tips = [
+  'predstavu, čo by ste chceli – aj keď ešte nie je úplná',
+  'inšpiráciu – napríklad fotky z galérie alebo z internetu',
+  'predstavu o farbách, materiáloch a štýle',
+  'približný rozpočet, s ktorým počítate',
+];
+---
+
+<BaseLayout
+  title="Kontakt"
+  description={`Kontaktujte stolárstvo Facstol – ${site.owner}. Telefón ${site.phoneDisplay}, e-mail ${site.email}. Dohodnite si obhliadku zdarma.`}
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head animate-in">
+        <p class="eyebrow">Kontakt</p>
+        <h1>Ozvite sa mi</h1>
+        <p class="lead">
+          Máte záujem o nábytok na mieru? Zavolajte alebo napíšte a dohodneme si obhliadku – je zadarmo. Na mieste
+          priestor zameriam, prejdeme vaše predstavy a potom pripravím presnú cenovú ponuku.
+        </p>
+      </div>
+
+      <ul class="channels">
+        {
+          channels.map((c, i) => (
+            <li data-reveal style={`--delay: ${i * 80}ms`}>
+              <a href={c.href} class="channel" {...('external' in c ? { target: '_blank', rel: 'noopener' } : {})}>
+                <span class="hex-icon">
+                  <Icon name={c.icon} />
+                </span>
+                <span>
+                  <span class="channel-label">{c.label}</span>
+                  <span class="channel-value">{c.value}</span>
+                  <span class="channel-note">{c.note}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="layout">
+        <div>
+          <h2 class="form-title">Napíšte mi</h2>
+          <ContactForm />
+        </div>
+
+        <aside class="side">
+          <div class="tips">
+            <h2>Prečo osobná obhliadka?</h2>
+            <p class="why">
+              Z fotiek a popisu viem dať len veľmi orientačnú cenu. Na mieste uvidím nerovné steny, rozvody či prístup do
+              miestnosti, priestor presne zameriam a ponuka potom sedí. Je to lepšie pre obe strany – a obhliadka je
+              zadarmo.
+            </p>
+            <h3>Na obhliadku si pripravte</h3>
+            <ul>
+              {tips.map((tip) => <li>{tip}</li>)}
+            </ul>
+          </div>
+
+          <div class="area">
+            <Icon name="pin" size={28} />
+            <div>
+              <h2>{site.city} a celé Slovensko</h2>
+              <p>{locationText}</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section-head h1 {
+    font-size: clamp(2.25rem, 3vw + 1rem, 3.5rem);
+  }
+
+  .channels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .channel {
+    display: flex;
+    gap: 18px;
+    height: 100%;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+
+  .channel:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    transform: translateY(-2px);
+  }
+
+  .channel > span:last-child {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .channel-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .channel-value {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .channel-note {
+    color: var(--muted);
+    font-size: 0.9375rem;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 7fr 4fr;
+    gap: clamp(24px, 4vw, 48px);
+    align-items: start;
+    margin-top: clamp(48px, 6vw, 72px);
+  }
+
+  .form-title {
+    font-size: clamp(1.5rem, 1.5vw + 1rem, 2rem);
+    margin-bottom: 20px;
+  }
+
+  .side {
+    display: grid;
+    gap: 16px;
+  }
+
+  .tips,
+  .area {
+    padding: 28px;
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+  }
+
+  .side h2 {
+    font-size: 1.25rem;
+    margin-bottom: 14px;
+  }
+
+  .tips ul {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.2em;
+  }
+
+  .tips li::marker {
+    color: var(--accent-ink);
+  }
+
+  .tips .why {
+    margin-bottom: 20px;
+    color: var(--muted);
+  }
+
+  .tips h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+
+  .area {
+    display: flex;
+    gap: 16px;
+    color: var(--accent-ink);
+  }
+
+  .area p {
+    color: var(--ink);
+  }
+
+  @media (max-width: 1023px) {
+    .channels {
+      grid-template-columns: 1fr;
+    }
+
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

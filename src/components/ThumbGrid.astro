@@ -1,0 +1,120 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+
+interface Props {
+  photos: { src: ImageMetadata; alt: string; full: string }[];
+}
+
+// Thumbnails start hidden (CSS) and are revealed by the IntersectionObserver in galeria.astro
+const { photos } = Astro.props;
+const sizes = '(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw';
+---
+
+<ul class="grid">
+  {
+    photos.map((photo, i) => (
+      <li data-col={i % 4}>
+        <a href={photo.full} data-lightbox>
+          <Image src={photo.src} alt={photo.alt} width={720} widths={[360, 540, 720]} sizes={sizes} />
+          <span class="zoom" aria-hidden="true">
+            <span class="zoom-hex">
+              <Icon name="zoom" size={22} />
+            </span>
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .grid a {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--line);
+    cursor: zoom-in;
+  }
+
+  .grid :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .grid a:hover :global(img) {
+    transform: scale(1.06);
+  }
+
+  .zoom {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgb(16 15 13 / 0);
+    transition: background-color 0.3s;
+  }
+
+  .zoom-hex {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 56px;
+    clip-path: var(--hexagon);
+    background: var(--accent);
+    color: var(--ink);
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity 0.25s,
+      transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .grid a:hover .zoom,
+  .grid a:focus-visible .zoom {
+    background: rgb(16 15 13 / 0.28);
+  }
+
+  .grid a:hover .zoom-hex,
+  .grid a:focus-visible .zoom-hex {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (hover: none) {
+    .zoom {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) .grid li:not(:global(.shown)) {
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 639px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+  }
+</style>

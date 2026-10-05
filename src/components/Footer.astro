@@ -1,0 +1,121 @@
+---
+import { nav, site } from '../config';
+import Logo from './Logo.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container grid">
+    <div class="brand">
+      <a href="/" class="home" aria-label={`${site.name} – úvodná stránka`}><Logo tone="light" /></a>
+      <p>Stolárstvo {site.owner}. Nábytok na mieru – od návrhu až po montáž.</p>
+    </div>
+
+    <div>
+      <h2>Kontakt</h2>
+      <ul>
+        <li><a href={`tel:${site.phone}`}>{site.phoneDisplay}</a></li>
+        <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        <li>{site.city} · montáž po celom Slovensku</li>
+      </ul>
+    </div>
+
+    <div>
+      <h2>Stránky</h2>
+      <ul>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="container bottom">
+    <p>&copy; {year} {site.name} – {site.owner}</p>
+    <a href="/ochrana-osobnych-udajov/">Ochrana osobných údajov</a>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    background: var(--dark);
+    color: var(--dark-muted);
+    padding-top: clamp(56px, 7vw, 88px);
+    font-size: 0.9375rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    padding-bottom: 48px;
+  }
+
+  .brand p {
+    margin-top: 16px;
+    max-width: 34ch;
+  }
+
+  .home {
+    display: inline-block;
+    text-decoration: none;
+  }
+
+  h2 {
+    margin-bottom: 14px;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  ul {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    color: var(--dark-muted);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--accent);
+  }
+
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding-block: 24px;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 899px) {
+    .bottom {
+      padding-bottom: 96px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

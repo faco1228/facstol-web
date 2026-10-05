@@ -1,0 +1,178 @@
+---
+import '@fontsource-variable/sora';
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+import defaultShareImage from '../assets/galeria/kuchyne/kuchyna13.jpg';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../config';
+
+interface Props {
+  // " | Facstol" is appended automatically
+  title?: string;
+  description?: string;
+  // Open Graph image
+  image?: ImageMetadata;
+  noindex?: boolean;
+}
+
+const { title, description = site.description, image = defaultShareImage, noindex = false } = Astro.props;
+
+const fullTitle = title ? `${title} | ${site.name}` : `${site.name} – nábytok na mieru, ${site.city} | ${site.owner}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const shareImage = await getImage({ src: image, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+const shareImageUrl = new URL(shareImage.src, Astro.site);
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'HomeAndConstructionBusiness',
+  name: site.name,
+  description: site.description,
+  url: site.url,
+  telephone: site.phone,
+  email: site.email,
+  image: shareImageUrl.href,
+  founder: { '@type': 'Person', name: site.owner },
+  address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: 'SK' },
+  areaServed: [
+    { '@type': 'Country', name: 'Slovensko' },
+    ...(site.abroad ? [{ '@type': 'Country', name: site.abroad }] : []),
+  ],
+};
+---
+
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="utf-8" />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // A skipped cross-document view transition rejects a promise nobody can catch – silence it.
+      addEventListener('unhandledrejection', (e) => {
+        if (e.reason?.name === 'AbortError' && /transition/i.test(e.reason.message)) e.preventDefault();
+      });
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="sk_SK" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={shareImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </head>
+  <body>
+    <a href="#obsah" class="skip-link">Preskočiť na obsah</a>
+    <Header />
+    <main id="obsah">
+      <slot />
+    </main>
+    <Footer />
+    <a href={`tel:${site.phone}`} class="call-fab" aria-label={`Zavolať ${site.phoneDisplay}`}>
+      <Icon name="phone" size={26} />
+    </a>
+  </body>
+</html>
+
+<script>
+  import Lenis from 'lenis';
+  import 'lenis/dist/lenis.css';
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Smooth wheel scrolling (touch stays native). The gallery lightbox calls lenis.stop()/start().
+  if (!reduceMotion) {
+    window.lenis = new Lenis({
+      autoRaf: true,
+      allowNestedScroll: true,
+      prevent: (node) => node.nodeName === 'DIALOG',
+    });
+  }
+
+  // Fallback for hash links (e.g. /kontakt/#formular) when the page stays at the top after load
+  if (location.hash) {
+    const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (target) {
+      addEventListener(
+        'load',
+        () => {
+          const offset = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+          if (scrollY < 50 && target.getBoundingClientRect().top - offset > 40) target.scrollIntoView();
+        },
+        { once: true },
+      );
+    }
+  }
+
+  function countUp(el: HTMLElement) {
+    const target = Number(el.dataset.countTo);
+    const start = performance.now();
+    const duration = 1400;
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target as HTMLElement;
+        el.classList.add('is-visible');
+        if (el.dataset.countTo && !reduceMotion) countUp(el);
+        observer.unobserve(el);
+      }
+    },
+    { rootMargin: '0px 0px -8% 0px' },
+  );
+
+  document.querySelectorAll('[data-reveal], [data-count-to]').forEach((el) => observer.observe(el));
+</script>
+
+<style>
+  .call-fab {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 60;
+    display: none;
+    place-items: center;
+    width: 60px;
+    height: 64px;
+    clip-path: var(--hexagon);
+    background: var(--accent);
+    color: var(--ink);
+  }
+
+  .call-fab:hover {
+    background: var(--accent-hover);
+    color: var(--ink);
+  }
+
+  @media (max-width: 899px) {
+    .call-fab {
+      display: grid;
+    }
+  }
+</style>

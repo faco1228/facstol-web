@@ -1,0 +1,85 @@
+---
+import { site } from '../config';
+import Icon from './Icon.astro';
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+
+const {
+  title = 'Máte predstavu? Poďme ju zrealizovať.',
+  text = 'Zavolajte alebo napíšte a dohodneme si obhliadku – je zadarmo. Priestor zameriam a pripravím presnú cenovú ponuku.',
+} = Astro.props;
+---
+
+<section class="cta">
+  <svg class="hex" viewBox="0 0 100 100" aria-hidden="true">
+    <polygon points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"></polygon>
+  </svg>
+  <div class="container inner">
+    <div>
+      <h2>{title}</h2>
+      <p>{text}</p>
+    </div>
+    <div class="actions">
+      <a href={`tel:${site.phone}`} class="btn btn-primary">
+        <Icon name="phone" />
+        {site.phoneDisplay}
+      </a>
+      <a href="/kontakt/#formular" class="btn btn-ghost-light">
+        Obhliadka zdarma
+        <Icon name="arrow" />
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    position: relative;
+    overflow: hidden;
+    background: var(--dark-2);
+    color: #fff;
+    padding-block: clamp(56px, 7vw, 96px);
+    isolation: isolate;
+  }
+
+  .hex {
+    position: absolute;
+    right: -60px;
+    top: 50%;
+    z-index: -1;
+    width: 380px;
+    translate: 0 -50%;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    opacity: 0.25;
+  }
+
+  .inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+    max-width: 20ch;
+  }
+
+  p {
+    margin-top: 12px;
+    max-width: 52ch;
+    color: var(--dark-muted);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>
